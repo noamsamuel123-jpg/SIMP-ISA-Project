@@ -176,8 +176,8 @@ void write_memout(const char *filename) {
 
 // Function to write the current state to trace.txt
 void write_trace(FILE *trace_file, int32_t current_pc, uint32_t inst, int current_cycle) {
-    // Write cycle, PC, and instruction
-    fprintf(trace_file, "%08X %08X %08X", current_cycle, current_pc, inst);
+    // Write cycle, PC (3 digits), and instruction
+    fprintf(trace_file, "%08X %03X %08X", current_cycle, current_pc & 0xFFF, inst);
     
     for (int i = 0; i < NUM_REGS; i++) {
         fprintf(trace_file, " %08X", regs[i]);
@@ -395,11 +395,12 @@ int main(int argc, char *argv[]) {
             {
                 int io_idx = regs[rs] + regs[rt];
                 if (io_idx >= 0 && io_idx < NUM_IO_REGS) {
+                    int32_t old_val = io_regs[io_idx];
                     io_regs[io_idx] = regs[rd];
                     fprintf(hwregtrace_file, "%08X WRITE %s %08X\n", trace_cycle, io_reg_names[io_idx], io_regs[io_idx]);
                     
-                    if (io_idx == 9) fprintf(leds_file, "%08X %08X\n", trace_cycle, io_regs[9]);
-                    else if (io_idx == 10) fprintf(display7seg_file, "%08X %08X\n", trace_cycle, io_regs[10]);
+                    if (io_idx == 9 && old_val != io_regs[9]) fprintf(leds_file, "%08X %08X\n", trace_cycle, io_regs[9]);
+                    else if (io_idx == 10 && old_val != io_regs[10]) fprintf(display7seg_file, "%08X %08X\n", trace_cycle, io_regs[10]);
                     else if (io_idx == 14 && io_regs[17] == 0) { // diskcmd and disk is free
                         io_regs[17] = 1; // diskstatus = busy
                         disk_timer = 1024;
