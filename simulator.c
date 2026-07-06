@@ -32,7 +32,7 @@ const char *io_reg_names[] = {
     "irq0enable", "irq1enable", "irq2enable", "irq0status", "irq1status", "irq2status",
     "irqhandler", "irqreturn", "clks", "leds", "display7seg", "timerenable",
     "timercurrent", "timermax", "diskcmd", "disksector", "diskbuffer", "diskstatus",
-    "reserved1", "reserved2", "monitoraddr", "monitordata", "monitorcmd"
+    "reserved", "reserved", "monitoraddr", "monitordata", "monitorcmd"
 };
 
 // Helper function for Sign Extension
@@ -90,7 +90,7 @@ void write_diskout(const char *filename) {
     if (file == NULL) return;
 
     for (int i = 0; i < DISK_SIZE; i++) {
-        fprintf(file, "%08x\n", disk[i]);
+        fprintf(file, "%08X\n", disk[i]);
     }
     fclose(file);
 }
@@ -101,7 +101,7 @@ void write_monitor_txt(const char *filename) {
     if (file == NULL) return;
 
     for (int i = 0; i < MONITOR_SIZE; i++) {
-        fprintf(file, "%02x\n", monitor[i]);
+        fprintf(file, "%02X\n", monitor[i]);
     }
     fclose(file);
 }
@@ -152,7 +152,7 @@ void write_regout(const char *filename) {
 
     // starting from 3 for not printing R0, R1, R2
     for (int i = 3; i < NUM_REGS; i++) {
-        fprintf(file, "%08x\n", regs[i]);
+        fprintf(file, "%08X\n", regs[i]);
     }
 
     fclose(file);
@@ -167,7 +167,7 @@ void write_memout(const char *filename) {
     }
 
     for (int i = 0; i < MEMORY_SIZE; i++) {
-        fprintf(file, "%08x\n", memory[i]);
+        fprintf(file, "%08X\n", memory[i]);
     }
 
     fclose(file);
@@ -243,6 +243,8 @@ int main(int argc, char *argv[]) {
         int use_imm2 = (rd == 2 || rs == 2 || rt == 2);
         if (use_imm2) {
             regs[2] = memory[pc + 1];
+        } else {
+            regs[2] = 0; // Requirement: Write 8 zeros if not used
         }
 
         // 4. Calculate trace cycle (second cycle if 2-cycle instruction)
@@ -437,7 +439,7 @@ int main(int argc, char *argv[]) {
     // Write total cycles
     FILE *cycles_file = fopen(argv[8], "w");
     if (cycles_file != NULL) {
-        fprintf(cycles_file, "%d\n", cycle);
+        fprintf(cycles_file, "%08X\n", cycle);
         fclose(cycles_file);
     }
 
