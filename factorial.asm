@@ -3,7 +3,7 @@
 
 # 2. Main Program Setup
 # Initialize Stack Pointer ($sp) to address 0x800
-add $sp, $zero, $imm1, 0x800, 0
+add $sp, $zero, $imm2, 0, 0x800
 
 # Load n from memory address 0x100 into $a0
 lw $a0, $zero, $imm1, 0x100, 0

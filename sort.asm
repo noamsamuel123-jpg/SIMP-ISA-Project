@@ -1,5 +1,5 @@
 # 1. Initialize test array at address 0x100
-.array 0x100 5, 20, 15, 8, 1, 25, 7, 10, 14, 2, 6, 9, 13, 4, 11, 0
+.array 0x100 5, -20, 15, 8, 1, -25, 7, 10, -14, 2, 6, 9, 13, -4, 11, 0
 
 # 2. Setup Registers
 add $s0, $zero, $imm1, 0x100, 0      # $s0 = base address of the array (0x100)
