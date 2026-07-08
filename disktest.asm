@@ -18,17 +18,17 @@ bne $imm1, $t0, $zero, WaitDisk2, 0  # Wait for Sector 0 read to finish
 out $zero, $zero, $imm1, 4, 0        # Clear irq1status (IO Reg 4) to 0
 
 # 3. Loop over Sectors 1 to 7
-add $s2, $zero, $imm1, 1, 0          # $s2 = s = 1 (Sector counter)
+add $v0, $zero, $imm1, 1, 0          # $v0 = s = 1 (Sector counter)
 
 SectorLoop:
-bge $imm1, $s2, $imm2, WriteSector8, 8 # If s >= 8, exit SectorLoop
+bge $imm1, $v0, $imm2, WriteSector8, 8 # If s >= 8, exit SectorLoop
 
 WaitDisk3:
 in $t0, $zero, $imm1, 17, 0          # Read diskstatus
 bne $imm1, $t0, $zero, WaitDisk3, 0  # Wait until disk is free
 
 # Setup DMA to read Sector 's'
-out $s2, $zero, $imm1, 15, 0         # IOReg[15] (disksector) = s ($s2)
+out $v0, $zero, $imm1, 15, 0         # IOReg[15] (disksector) = s ($v0)
 out $s1, $zero, $imm1, 16, 0         # IOReg[16] (diskbuffer) = 0x200
 out $imm1, $zero, $imm2, 1, 14       # IOReg[14] (diskcmd) = 1 (Read command)
 
@@ -52,7 +52,7 @@ add $t1, $t1, $imm1, 1, 0            # i++
 beq $imm1, $zero, $zero, WordLoop, 0 # Unconditional jump to WordLoop
 
 EndWordLoop:
-add $s2, $s2, $imm1, 1, 0            # s++ (Increment Sector counter)
+add $v0, $v0, $imm1, 1, 0            # s++ (Increment Sector counter)
 beq $imm1, $zero, $zero, SectorLoop, 0 # Jump back to next sector
 
 # 5. Write SumBuffer to Sector 8
