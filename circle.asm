@@ -1,61 +1,76 @@
+# circle.asm
+# Draws a filled white circle on the 256x256 monitor.
+# Inputs:
+# MEM[0x100]: Center offset ( (y_c << 8) | x_c )
+# MEM[0x101]: Radius (R)
+
 # 1. Initialize center address and radius for testing
-.word 0x100 0x8080                   # Center offset: row 128 (0x80), col 128 (0x80) -> 32896
+.word 0x100 0x8080                   # Center: row 128, col 128
 .word 0x101 50                       # Radius: 50 pixels
 
+# Register Mapping:
+# $s0 (R11) = Center row (y_c)
+# $s1 (R12) = Center col (x_c)
+# $v0 (R3)  = Radius squared (R^2)
+# $t0 (R8)  = Current y (loop counter)
+# $t1 (R9)  = Current x (loop counter)
+# $t2 (R10) = y_end
+# $a0 (R4)  = x_start
+# $a1 (R5)  = x_end
+# $a2 (R6)  = Temp / Distance check
+# $a3 (R7)  = Temp / Pixel Address
+
 # 2. Setup and Load Inputs
-lw $s0, $zero, $imm1, 0x100, 0       # $s0 = C (Center offset in frame buffer)
-lw $s1, $zero, $imm1, 0x101, 0       # $s1 = R (Radius)
-mul $s2, $s1, $s1, 0, 0              # $s2 = R^2 (Radius squared for distance check)
+lw $a2, $zero, $imm1, 0x100, 0       # Load center offset
+srl $s0, $a2, $imm1, 8, 0            # $s0 = y_c = offset >> 8
+and $s1, $a2, $imm1, 255, 0          # $s1 = x_c = offset & 0xFF
 
-# 3. Extract X and Y coordinates of the center (without division)
-srl $t0, $s0, $imm1, 8, 0            # $t0 = y_c = C >> 8 (Divide by 256 to get row)
-and $t1, $s0, $imm1, 255, 0          # $t1 = x_c = C & 255 (Modulo 256 to get column)
+lw $a2, $zero, $imm1, 0x101, 0       # Load Radius (R)
+mul $v0, $a2, $a2, 0, 0              # $v0 = R^2
 
-# 4. Calculate Bounding Box Limits
-sub $t2, $t0, $s1, 0, 0              # $t2 = y = y_c - R (Start row)
-add $t3, $t0, $s1, 0, 0              # $t3 = y_end = y_c + R (End row)
-sub $a0, $t1, $s1, 0, 0              # $a0 = x_start = x_c - R (Start column)
-add $t5, $t1, $s1, 0, 0              # $t5 = x_end = x_c + R (End column)
+# 3. Calculate Bounding Box
+sub $t0, $s0, $a2, 0, 0              # $t0 = y_start = y_c - R
+add $t2, $s0, $a2, 0, 0              # $t2 = y_end = y_c + R
+sub $a0, $s1, $a2, 0, 0              # $a0 = x_start = x_c - R
+add $a1, $s1, $a2, 0, 0              # $a1 = x_end = x_c + R
 
-# 5. Outer Loop: Iterate over Y (Rows)
+# 4. Outer Loop: Iterate over Y (Rows)
 OuterLoopY:
-bgt $imm1, $t2, $t3, EndCircle, 0    # if (y > y_end) goto EndCircle (Done drawing)
-add $t4, $a0, $zero, 0, 0            # $t4 = x = x_start (Reset X for the new row)
+bgt $imm1, $t0, $t2, EndCircle, 0    # if (y > y_end) goto End
+add $t1, $a0, $zero, 0, 0            # x = x_start
 
-# 6. Inner Loop: Iterate over X (Columns)
+# 5. Inner Loop: Iterate over X (Columns)
 InnerLoopX:
-bgt $imm1, $t4, $t5, NextY, 0        # if (x > x_end) goto NextY (Row finished)
+bgt $imm1, $t1, $a1, NextY, 0        # if (x > x_end) goto NextY
 
-# 7. Calculate Distance from Center: dx^2 + dy^2
-sub $a1, $t4, $t1, 0, 0              # $a1 = dx = x - x_c
-sub $a2, $t2, $t0, 0, 0              # $a2 = dy = y - y_c
-mul $a1, $a1, $a1, 0, 0              # $a1 = dx^2
-mul $a2, $a2, $a2, 0, 0              # $a2 = dy^2
-add $a3, $a1, $a2, 0, 0              # $a3 = dx^2 + dy^2 (Current pixel distance squared)
+# 6. Calculate Distance: (x-x_c)^2 + (y-y_c)^2
+sub $a2, $t1, $s1, 0, 0              # dx = x - x_c
+mul $a2, $a2, $a2, 0, 0              # dx^2
+sub $a3, $t0, $s0, 0, 0              # dy = y - y_c
+mul $a3, $a3, $a3, 0, 0              # dy^2
+add $a2, $a2, $a3, 0, 0              # dist^2 = dx^2 + dy^2
 
-# 8. Check if pixel is inside the circle
-bgt $imm1, $a3, $s2, NextX, 0        # if (dist^2 > R^2) goto NextX (Pixel is outside, skip)
+# 7. Check if inside
+bgt $imm1, $a2, $v0, NextX, 0        # if (dist^2 > R^2) continue
 
-# 9. Draw Pixel!
-# Calculate exact pixel offset in frame buffer: offset = (y * 256) + x
-sll $v0, $t2, $imm1, 8, 0            # $v0 = y << 8 (y * 256)
-add $v0, $v0, $t4, 0, 0              # $v0 = (y * 256) + x
+# 8. Draw Pixel
+# Address = (y << 8) | x
+sll $a3, $t0, $imm1, 8, 0            # y << 8
+add $a3, $a3, $t1, 0, 0              # (y << 8) + x
+out $a3, $zero, $imm1, 20, 0         # monitoraddr
+add $a2, $zero, $imm1, 255, 0        # White color
+out $a2, $zero, $imm1, 21, 0         # monitordata
+add $a2, $zero, $imm1, 1, 0          # Command: write
+out $a2, $zero, $imm1, 22, 0         # monitorcmd
 
-# Send commands to Hardware I/O Registers
-out $v0, $zero, $imm1, 20, 0         # IOReg[20] (monitoraddr) = pixel offset
-out $imm1, $zero, $imm2, 255, 21     # IOReg[21] (monitordata) = 255 (White color)
-out $imm1, $zero, $imm2, 1, 22       # IOReg[22] (monitorcmd) = 1 (Trigger write)
-
-# 10. Increment X and loop
+# 9. Increment and Loop
 NextX:
-add $t4, $t4, $imm1, 1, 0            # x++
-beq $imm1, $zero, $zero, InnerLoopX, 0 # Unconditional jump back to InnerLoopX
+add $t1, $t1, $imm1, 1, 0            # x++
+beq $imm1, $zero, $zero, InnerLoopX, 0
 
-# 11. Increment Y and loop
 NextY:
-add $t2, $t2, $imm1, 1, 0            # y++
-beq $imm1, $zero, $zero, OuterLoopY, 0 # Unconditional jump back to OuterLoopY
+add $t0, $t0, $imm1, 1, 0            # y++
+beq $imm1, $zero, $zero, OuterLoopY, 0
 
-# 12. Finish execution
 EndCircle:
-halt $zero, $zero, $zero, 0, 0       # Halt the simulator
+halt $zero, $zero, $zero, 0, 0
