@@ -1,0 +1,67 @@
+# macOS system files
+.DS_Store
+
+# Compiled executables
+*.exe
+*.o
+*.dSYM/
+
+# Assembler output files
+*_memin.txt
+
+# Simulator output files
+memout.txt
+regout.txt
+trace.txt
+hwregtrace.txt
+cycles.txt
+leds.txt
+display7seg.txt
+diskout.txt
+monitor.txt
+monitor.yuv
+
+# Generated output files from specific tests
+sort_memout.txt
+sort_regout.txt
+sort_trace.txt
+sort_hwregtrace.txt
+sort_cycles.txt
+sort_leds.txt
+sort_display7seg.txt
+sort_diskout.txt
+sort_monitor.txt
+sort_monitor.yuv
+
+fact_memout.txt
+fact_regout.txt
+fact_trace.txt
+fact_hwregtrace.txt
+fact_cycles.txt
+fact_leds.txt
+fact_display7seg.txt
+fact_diskout.txt
+fact_monitor.txt
+fact_monitor.yuv
+
+circle_memout.txt
+circle_regout.txt
+circle_trace.txt
+circle_hwregtrace.txt
+circle_cycles.txt
+circle_leds.txt
+circle_display7seg.txt
+circle_diskout.txt
+circle_monitor.txt
+circle_monitor.yuv
+
+disktest_memout.txt
+disktest_regout.txt
+disktest_trace.txt
+disktest_hwregtrace.txt
+disktest_cycles.txt
+disktest_leds.txt
+disktest_display7seg.txt
+disktest_diskout.txt
+disktest_monitor.txt
+disktest_monitor.yuv
