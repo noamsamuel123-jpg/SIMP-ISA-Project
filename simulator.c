@@ -13,7 +13,7 @@
 #define MONITOR_HEIGHT 256
 #define MONITOR_SIZE (MONITOR_WIDTH * MONITOR_HEIGHT)
 
-// data structures for registers
+// Data structures for registers
 int32_t memory[MEMORY_SIZE] = {0};
 int32_t regs[NUM_REGS] = {0};
 int32_t io_regs[NUM_IO_REGS] = {0};
@@ -36,10 +36,10 @@ const char *io_reg_names[] = {
     "reserved", "reserved", "monitoraddr", "monitordata", "monitorcmd"
 };
 
-// Helper function for Sign Extension
+// Helper function for sign extension
 // Duplicates bit 11 to all upper bits (31:12)
 int32_t sign_extend(int32_t imm12) {
-    // Check if bit 11 is on (negative number)
+    // Check if bit 11 is set (negative number)
     if (imm12 & 0x00000800) {
         return imm12 | 0xFFFFF000;
     }
@@ -48,11 +48,11 @@ int32_t sign_extend(int32_t imm12) {
 
 // Helper function to enforce read-only registers 0, 1, and 2
 void enforce_readonly_regs() {
-    regs[0] = 0; // register 0 is always zero
+    regs[0] = 0; // Register 0 is always zero
     // Registers 1 and 2 (imm1, imm2) are only updated during decode and must not written
 }
 
-// Reading the file memin.txt to the memory
+// Loading memin.txt
 void load_memory(const char *filename) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -151,7 +151,7 @@ void write_regout(const char *filename) {
         exit(1);
     }
 
-    // starting from 3 for not printing R0, R1, R2
+    // Starting from 3 for not printing R0, R1, R2
     for (int i = 3; i < NUM_REGS; i++) {
         fprintf(file, "%08X\n", regs[i]);
     }
@@ -177,7 +177,7 @@ void write_memout(const char *filename) {
 
 // Function to write the current state to trace.txt
 void write_trace(FILE *trace_file, int32_t current_pc, uint32_t inst, int current_cycle) {
-    // Write cycle, PC (3 digits), and instruction
+    // Write cycle, PC, and instruction
     fprintf(trace_file, "%08X %03X %08X", current_cycle, current_pc & 0xFFF, inst);
     
     for (int i = 0; i < NUM_REGS; i++) {
@@ -188,7 +188,7 @@ void write_trace(FILE *trace_file, int32_t current_pc, uint32_t inst, int curren
 
 
 int main(int argc, char *argv[]) {
-    // checking if all arguments were supplied
+    // Checking if all arguments were supplied
     if (argc < 14) {
         printf("Usage: sim.exe memin.txt diskin.txt irq2in.txt memout.txt regout.txt trace.txt hwregtrace.txt cycles.txt leds.txt display7seg.txt diskout.txt monitor.txt monitor.yuv\n");
         return 1;
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
     load_disk(argv[2]);
     load_irq2(argv[3]);
     
-    // open files
+    // Open files
     FILE *trace_file = fopen(argv[6], "w");
     FILE *hwregtrace_file = fopen(argv[7], "w");
     FILE *leds_file = fopen(argv[9], "w");
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
 
     // Main simulator loop - runs until halt instruction
     while (!halt_reached) {
-        // 1. Interrupt check logic (sampling at instruction boundary)
+        // 1. Interrupt check logic
         int irq = ((io_regs[0] & io_regs[3]) | (io_regs[1] & io_regs[4]) | (io_regs[2] & io_regs[5]));
         if (irq && !is_in_interrupt) {
             is_in_interrupt = true;
@@ -245,7 +245,7 @@ int main(int argc, char *argv[]) {
         if (use_imm2) {
             regs[2] = memory[pc + 1];
         } else {
-            regs[2] = 0; // Requirement: Write 8 zeros if not used
+            regs[2] = 0; // Write 8 zeros if not used
         }
         
         // 4. Calculate trace cycle (second cycle if 2-cycle instruction)
@@ -427,6 +427,7 @@ int main(int argc, char *argv[]) {
                 break;
         }
          pc &= 0xFFF; //Masking the PC for 12 bits
+        
         // Enforce read-only policy on registers 0, 1, 2
         enforce_readonly_regs();
     }
