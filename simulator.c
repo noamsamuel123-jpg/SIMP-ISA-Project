@@ -426,7 +426,7 @@ int main(int argc, char *argv[]) {
                 pc = next_pc;
                 break;
         }
-
+         pc &= 0xFFF; //Masking the PC for 12 bits
         // Enforce read-only policy on registers 0, 1, 2
         enforce_readonly_regs();
     }
