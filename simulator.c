@@ -404,7 +404,7 @@ int main(int argc, char *argv[]) {
                     
                     if (io_idx == 9 && old_val != io_regs[9]) fprintf(leds_file, "%08X %08X\n", trace_cycle, io_regs[9]);
                     else if (io_idx == 10 && old_val != io_regs[10]) fprintf(display7seg_file, "%08X %08X\n", trace_cycle, io_regs[10]);
-                    else if (io_idx == 14 && io_regs[17] == 0) { // diskcmd and disk is free
+                    else if (io_idx == 14 && (io_regs[14] == 1 || io_regs[14] == 2) && io_regs[17] == 0) { // diskcmd and disk is free
                         io_regs[17] = 1; // diskstatus = busy
                         disk_timer = 1024;
                     }
