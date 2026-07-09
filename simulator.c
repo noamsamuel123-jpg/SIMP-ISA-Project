@@ -248,16 +248,10 @@ int main(int argc, char *argv[]) {
             regs[2] = 0; // Requirement: Write 8 zeros if not used
         }
 
-        // 4. Calculate trace cycle (second cycle if 2-cycle instruction)
-        int trace_cycle = cycle + (use_imm2 ? 1 : 0);
-
-        // 5. Write trace before execution
-        write_trace(trace_file, pc, inst, trace_cycle);
-
-        // 6. Pre-calculate next_pc
+        // 4. Pre-calculate next_pc
         int32_t next_pc = pc + (use_imm2 ? 2 : 1);
         
-        // 7. Advance time (once or twice)
+        // 5. Advance time (once or twice) BEFORE logging the trace
         for (int i = 0; i < (use_imm2 ? 2 : 1); i++) {
             // Handle IRQ2 from file
             if (irq2_idx < irq2_count && cycle >= irq2_cycles[irq2_idx]) {
@@ -302,6 +296,12 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
+        
+        // 6. Trace cycle = current cycle count (already includes this instruction's tick(s))
+        int trace_cycle = cycle;
+
+        // 7. Write trace before execution
+        write_trace(trace_file, pc, inst, trace_cycle);
 
         // 8. Execute instruction
         switch (opcode) {
